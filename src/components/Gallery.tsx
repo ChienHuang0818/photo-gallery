@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { getPhotos, selectPhoto, setSearchQuery, incrementPage, Photo, triggerSearch } from '../store/photoSlice';
@@ -104,6 +104,12 @@ const CloseButton = styled.button`
   }
 `;
 
+const NoDataMessage = styled.p`
+  font-size: 18px;
+  color: #777;
+  margin-top: 20px;
+`;
+
 const Gallery: React.FC = () => {
   const dispatch: AppDispatch = useDispatch();
   const photos = useSelector((state: RootState) => state.photos.photos);
@@ -112,12 +118,13 @@ const Gallery: React.FC = () => {
   const page = useSelector((state: RootState) => state.photos.page);
   const hasMore = useSelector((state: RootState) => state.photos.hasMore);
   const isLoading = useSelector((state: RootState) => state.photos.isLoading);
+  const trigger = useSelector((state: RootState) => state.photos.triggerSearch);
 
   useEffect(() => {
-    if (searchQuery) {
+    if (trigger && searchQuery) {
       dispatch(getPhotos({ query: searchQuery, page }));
     }
-  }, [dispatch, searchQuery, page]);
+  }, [dispatch, searchQuery, page, trigger]);
 
   const handleImageClick = (photo: Photo) => {
     dispatch(selectPhoto(photo));
@@ -135,12 +142,12 @@ const Gallery: React.FC = () => {
 
   const loader = useRef<HTMLDivElement | null>(null);
 
-  const handleObserver = (entities: IntersectionObserverEntry[]) => {
+  const handleObserver = useCallback((entities: IntersectionObserverEntry[]) => {
     const target = entities[0];
-    if (target.isIntersecting && hasMore) {
+    if (target.isIntersecting && hasMore && trigger) {
       dispatch(incrementPage());
     }
-  };
+  }, [dispatch, hasMore, trigger]);
 
   useEffect(() => {
     const options = {
@@ -149,15 +156,16 @@ const Gallery: React.FC = () => {
       threshold: 1.0,
     };
     const observer = new IntersectionObserver(handleObserver, options);
-    if (loader.current) {
-      observer.observe(loader.current);
+    const currentLoader = loader.current;
+    if (currentLoader) {
+      observer.observe(currentLoader);
     }
     return () => {
-      if (loader.current) {
-        observer.unobserve(loader.current);
+      if (currentLoader) {
+        observer.unobserve(currentLoader);
       }
     };
-  }, [hasMore]);
+  }, [handleObserver]);
 
   return (
     <GalleryContainer>
@@ -178,11 +186,15 @@ const Gallery: React.FC = () => {
           </GalleryItem>
         ))}
       </GalleryGrid>
-      
+
       {isLoading && <Loader />} {/* 加载时显示加载图标 */}
-      
+
+      {photos.length === 0 && !isLoading && (
+        <NoDataMessage>查無資料</NoDataMessage>
+      )}
+
       <div ref={loader}></div> {/* 这个 div 用于 Intersection Observer */}
-      
+
       {selectedPhoto && (
         <PhotoDetails>
           <PhotoDetailsImage src={selectedPhoto.url} alt={selectedPhoto.description} />
@@ -193,6 +205,6 @@ const Gallery: React.FC = () => {
       )}
     </GalleryContainer>
   );
-};
+};  
 
-export default Gallery;
+export default Gallery;  

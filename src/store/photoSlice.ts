@@ -66,6 +66,7 @@ const photoSlice = createSlice({
       state.isLoading = true;
     });
     builder.addCase(getPhotos.fulfilled, (state, action) => {
+      console.log('Photos fetched successfully:', action.payload);
       if (state.page === 1) {
         state.photos = action.payload;
       } else {
@@ -77,6 +78,7 @@ const photoSlice = createSlice({
       }
     });
     builder.addCase(getPhotos.rejected, (state) => {
+      console.error('Failed to fetch photos');
       state.isLoading = false;
     });
   },

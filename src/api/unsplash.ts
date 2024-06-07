@@ -16,6 +16,7 @@ export const fetchPhotos = async (query: string, page: number) => {
         per_page: 30,
       },
     });
+    console.log('API response:', response.data);
     return response.data.results;
   } catch (error) {
     console.error('Error fetching photos:', error);
