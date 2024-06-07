@@ -16,6 +16,7 @@ interface PhotoState {
   hasMore: boolean;
   isLoading: boolean;
   triggerSearch: boolean;
+  noResults: boolean;
 }
 
 const initialState: PhotoState = {
@@ -26,6 +27,7 @@ const initialState: PhotoState = {
   hasMore: true,
   isLoading: false,
   triggerSearch: false,
+  noResults: false,
 };
 
 export const getPhotos = createAsyncThunk('photos/getPhotos', async ({ query, page }: { query: string, page: number }) => {
@@ -60,30 +62,27 @@ const photoSlice = createSlice({
     triggerSearch(state, action: PayloadAction<boolean>) {
       state.triggerSearch = action.payload;
     },
+    setNoResults(state, action: PayloadAction<boolean>) {
+      state.noResults = action.payload;
+    },
   },
   extraReducers: (builder) => {
     builder.addCase(getPhotos.pending, (state) => {
       state.isLoading = true;
     });
     builder.addCase(getPhotos.fulfilled, (state, action) => {
-      console.log('Photos fetched successfully:', action.payload);
+      state.isLoading = false;
+      state.noResults = action.payload.length === 0;
       if (state.page === 1) {
         state.photos = action.payload;
       } else {
         state.photos = [...state.photos, ...action.payload];
       }
-      state.isLoading = false;
-      if (action.payload.length === 0) {
-        state.hasMore = false;
-      }
-    });
-    builder.addCase(getPhotos.rejected, (state) => {
-      console.error('Failed to fetch photos');
-      state.isLoading = false;
+      state.hasMore = action.payload.length > 0;
     });
   },
 });
 
-export const { selectPhoto, setSearchQuery, incrementPage, setHasMore, triggerSearch } = photoSlice.actions;
+export const { selectPhoto, setSearchQuery, incrementPage, setHasMore, triggerSearch, setNoResults } = photoSlice.actions;
 
 export default photoSlice.reducer;

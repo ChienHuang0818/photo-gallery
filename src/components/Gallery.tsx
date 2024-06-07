@@ -1,10 +1,135 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import { getPhotos, selectPhoto, setSearchQuery, incrementPage, Photo, triggerSearch } from '../store/photoSlice';
+import { getPhotos, selectPhoto, setSearchQuery, incrementPage, Photo, triggerSearch, setNoResults } from '../store/photoSlice';
 import { RootState, AppDispatch } from '../store/store';
 import logo from '../assets/logo.png';
 import Loader from './Loader';
+
+const Gallery: React.FC = () => {
+  const dispatch: AppDispatch = useDispatch();
+  const photos = useSelector((state: RootState) => state.photos.photos);
+  const selectedPhoto = useSelector((state: RootState) => state.photos.selectedPhoto);
+  const searchQuery = useSelector((state: RootState) => state.photos.searchQuery);
+  const page = useSelector((state: RootState) => state.photos.page);
+  const hasMore = useSelector((state: RootState) => state.photos.hasMore);
+  const isLoading = useSelector((state: RootState) => state.photos.isLoading);
+  const trigger = useSelector((state: RootState) => state.photos.triggerSearch);
+  const [searchTriggered, setSearchTriggered] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  useEffect(() => {
+    if (searchTriggered && searchQuery) {
+      dispatch(getPhotos({ query: searchQuery, page })).then((action) => {
+        setSearchTriggered(false);  
+        if (action.payload.length === 0) {
+          setErrorMessage('No results');
+        } else {
+          setErrorMessage('');
+        }
+      });
+    }
+  }, [dispatch, searchQuery, page, searchTriggered]);
+
+  const handleImageClick = (photo: Photo) => {
+    dispatch(selectPhoto(photo));
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setSearchQuery(e.target.value));
+    setErrorMessage('');  
+    if (!e.target.value.trim()) {
+      setSearchTriggered(false);
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) {
+      setErrorMessage('Please enter a keyword to search');
+      return;
+    }
+    setSearchTriggered(true);
+    dispatch(triggerSearch(true));
+    dispatch(setNoResults(false)); 
+    dispatch(getPhotos({ query: searchQuery, page: 1 })).then((action) => {
+      if (action.payload.length === 0) {
+        setErrorMessage('No results');
+      } else {
+        setErrorMessage('');
+      }
+    });
+  };
+
+  const loader = useRef<HTMLDivElement | null>(null);
+
+  const handleObserver = useCallback((entities: IntersectionObserverEntry[]) => {
+    const target = entities[0];
+    if (target.isIntersecting && hasMore && trigger) {
+      dispatch(incrementPage());
+    }
+  }, [dispatch, hasMore, trigger]);
+
+  useEffect(() => {
+    const options = {
+      root: null,
+      rootMargin: '20px',
+      threshold: 1.0,
+    };
+    const observer = new IntersectionObserver(handleObserver, options);
+    const currentLoader = loader.current;
+    if (currentLoader) {
+      observer.observe(currentLoader);
+    }
+    return () => {
+      if (currentLoader) {
+        observer.unobserve(currentLoader);
+      }
+    };
+  }, [handleObserver]);
+
+  return (
+    <GalleryContainer>
+      <Logo src={logo} alt="Cinefly Logo" />
+      <SearchBarContainer onSubmit={handleSearchSubmit}>
+        <SearchBar
+          type="text"
+          placeholder="Search Photo"
+          value={searchQuery}
+          onChange={handleSearchChange}
+        />
+        <SearchButton type="submit">Search</SearchButton>
+      </SearchBarContainer>
+
+      {errorMessage && <Message>{errorMessage}</Message>}
+
+      {!isLoading && searchTriggered && photos.length === 0 && !errorMessage && (
+        <Message>No results</Message>
+      )}
+
+      <GalleryGrid>
+        {photos.map((photo: Photo) => (
+          <GalleryItem key={photo.id} onClick={() => handleImageClick(photo)}>
+            <GalleryImage src={photo.url} alt={photo.description} />
+          </GalleryItem>
+        ))}
+      </GalleryGrid>
+
+      {isLoading && <Loader />} 
+
+      <div ref={loader}></div> 
+
+      {selectedPhoto && (
+        <PhotoDetails>
+          <PhotoDetailsImage src={selectedPhoto.url} alt={selectedPhoto.description} />
+          <p><strong>Author:</strong> {selectedPhoto.author}</p>
+          <p><strong>Description:</strong> {selectedPhoto.description}</p>
+          <CloseButton onClick={() => dispatch(selectPhoto(null))}>close</CloseButton>
+        </PhotoDetails>
+      )}
+    </GalleryContainer>
+  );
+};
 
 const GalleryContainer = styled.div`
   display: flex;
@@ -104,107 +229,10 @@ const CloseButton = styled.button`
   }
 `;
 
-const NoDataMessage = styled.p`
+const Message = styled.p`
   font-size: 18px;
   color: #777;
   margin-top: 20px;
 `;
 
-const Gallery: React.FC = () => {
-  const dispatch: AppDispatch = useDispatch();
-  const photos = useSelector((state: RootState) => state.photos.photos);
-  const selectedPhoto = useSelector((state: RootState) => state.photos.selectedPhoto);
-  const searchQuery = useSelector((state: RootState) => state.photos.searchQuery);
-  const page = useSelector((state: RootState) => state.photos.page);
-  const hasMore = useSelector((state: RootState) => state.photos.hasMore);
-  const isLoading = useSelector((state: RootState) => state.photos.isLoading);
-  const trigger = useSelector((state: RootState) => state.photos.triggerSearch);
-
-  useEffect(() => {
-    if (trigger && searchQuery) {
-      dispatch(getPhotos({ query: searchQuery, page }));
-    }
-  }, [dispatch, searchQuery, page, trigger]);
-
-  const handleImageClick = (photo: Photo) => {
-    dispatch(selectPhoto(photo));
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    dispatch(setSearchQuery(e.target.value));
-  };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    dispatch(triggerSearch(true));
-    dispatch(getPhotos({ query: searchQuery, page: 1 }));
-  };
-
-  const loader = useRef<HTMLDivElement | null>(null);
-
-  const handleObserver = useCallback((entities: IntersectionObserverEntry[]) => {
-    const target = entities[0];
-    if (target.isIntersecting && hasMore && trigger) {
-      dispatch(incrementPage());
-    }
-  }, [dispatch, hasMore, trigger]);
-
-  useEffect(() => {
-    const options = {
-      root: null,
-      rootMargin: '20px',
-      threshold: 1.0,
-    };
-    const observer = new IntersectionObserver(handleObserver, options);
-    const currentLoader = loader.current;
-    if (currentLoader) {
-      observer.observe(currentLoader);
-    }
-    return () => {
-      if (currentLoader) {
-        observer.unobserve(currentLoader);
-      }
-    };
-  }, [handleObserver]);
-
-  return (
-    <GalleryContainer>
-      <Logo src={logo} alt="Cinefly Logo" />
-      <SearchBarContainer onSubmit={handleSearchSubmit}>
-        <SearchBar
-          type="text"
-          placeholder="Search Photo"
-          value={searchQuery}
-          onChange={handleSearchChange}
-        />
-        <SearchButton type="submit">Search</SearchButton>
-      </SearchBarContainer>
-      <GalleryGrid>
-        {photos.map((photo: Photo) => (
-          <GalleryItem key={photo.id} onClick={() => handleImageClick(photo)}>
-            <GalleryImage src={photo.url} alt={photo.description} />
-          </GalleryItem>
-        ))}
-      </GalleryGrid>
-
-      {isLoading && <Loader />} {/* 加载时显示加载图标 */}
-
-      {photos.length === 0 && !isLoading && (
-        <NoDataMessage>查無資料</NoDataMessage>
-      )}
-
-      <div ref={loader}></div> {/* 这个 div 用于 Intersection Observer */}
-
-      {selectedPhoto && (
-        <PhotoDetails>
-          <PhotoDetailsImage src={selectedPhoto.url} alt={selectedPhoto.description} />
-          <p><strong>Author:</strong> {selectedPhoto.author}</p>
-          <p><strong>Description:</strong> {selectedPhoto.description}</p>
-          <CloseButton onClick={() => dispatch(selectPhoto(null))}>close</CloseButton>
-        </PhotoDetails>
-      )}
-    </GalleryContainer>
-  );
-};  
-
-export default Gallery;  
+export default Gallery;
