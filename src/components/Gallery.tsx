@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import { getPhotos, selectPhoto, setSearchQuery, incrementPage, Photo, triggerSearch, setNoResults } from '../store/photoSlice';
+import { getPhotos, selectPhoto, setSearchQuery, incrementPage, triggerSearch, setNoResults, Photo } from '../store/photoSlice';
 import { RootState, AppDispatch } from '../store/store';
 import logo from '../assets/logo.png';
 import Loader from './Loader';
@@ -20,6 +20,7 @@ const Gallery: React.FC = () => {
 
   useEffect(() => {
     if (searchTriggered && searchQuery) {
+      console.log('Fetching photos with query:', searchQuery, 'and page:', page);
       dispatch(getPhotos({ query: searchQuery, page })).then((action) => {
         setSearchTriggered(false);  
         if (action.payload.length === 0) {
@@ -30,6 +31,13 @@ const Gallery: React.FC = () => {
       });
     }
   }, [dispatch, searchQuery, page, searchTriggered]);
+
+  useEffect(() => {
+    if (page > 1) {
+      console.log('Loading more photos for page:', page);
+      dispatch(getPhotos({ query: searchQuery, page }));
+    }
+  }, [dispatch, page]);
 
   const handleImageClick = (photo: Photo) => {
     dispatch(selectPhoto(photo));
@@ -61,32 +69,12 @@ const Gallery: React.FC = () => {
     });
   };
 
-  const loader = useRef<HTMLDivElement | null>(null);
-
-  const handleObserver = useCallback((entities: IntersectionObserverEntry[]) => {
-    const target = entities[0];
-    if (target.isIntersecting && hasMore && trigger) {
+  const handleLoadMore = () => {
+    if (hasMore && !isLoading) {
+      console.log('Load more button clicked');
       dispatch(incrementPage());
     }
-  }, [dispatch, hasMore, trigger]);
-
-  useEffect(() => {
-    const options = {
-      root: null,
-      rootMargin: '20px',
-      threshold: 1.0,
-    };
-    const observer = new IntersectionObserver(handleObserver, options);
-    const currentLoader = loader.current;
-    if (currentLoader) {
-      observer.observe(currentLoader);
-    }
-    return () => {
-      if (currentLoader) {
-        observer.unobserve(currentLoader);
-      }
-    };
-  }, [handleObserver]);
+  };
 
   return (
     <GalleryContainer>
@@ -103,10 +91,6 @@ const Gallery: React.FC = () => {
 
       {errorMessage && <Message>{errorMessage}</Message>}
 
-      {!isLoading && searchTriggered && photos.length === 0 && !errorMessage && (
-        <Message>No results</Message>
-      )}
-
       <GalleryGrid>
         {photos.map((photo: Photo) => (
           <GalleryItem key={photo.id} onClick={() => handleImageClick(photo)}>
@@ -117,7 +101,13 @@ const Gallery: React.FC = () => {
 
       {isLoading && <Loader />} 
 
-      <div ref={loader}></div> 
+      {searchQuery && hasMore && !isLoading && (
+        <LoadMoreButton onClick={handleLoadMore}>Load More</LoadMoreButton>
+      )}
+
+      {!hasMore && !isLoading && photos.length > 0 && (
+        <Message>No more results</Message>
+      )}
 
       {selectedPhoto && (
         <PhotoDetails>
@@ -233,6 +223,20 @@ const Message = styled.p`
   font-size: 18px;
   color: #777;
   margin-top: 20px;
+`;
+
+const LoadMoreButton = styled.button`
+  margin: 20px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+
+  &:hover {
+    background-color: #0056b3;
+  }
 `;
 
 export default Gallery;

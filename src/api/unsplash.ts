@@ -16,8 +16,14 @@ export const fetchPhotos = async (query: string, page: number) => {
         per_page: 30,
       },
     });
-    console.log('API response:', response.data);
-    return response.data.results;
+
+    // 確保提取到的是正確的 URL
+    return response.data.results.map((photo: any) => ({
+      id: photo.id,
+      url: photo.urls.small, // 確認這裡使用正確的 URL 屬性
+      description: photo.alt_description,
+      author: photo.user.name,
+    }));
   } catch (error) {
     console.error('Error fetching photos:', error);
     return [];
