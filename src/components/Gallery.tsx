@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
 import { getPhotos, selectPhoto, setSearchQuery, incrementPage, triggerSearch, setNoResults, Photo } from '../store/photoSlice';
@@ -14,9 +14,12 @@ const Gallery: React.FC = () => {
   const page = useSelector((state: RootState) => state.photos.page);
   const hasMore = useSelector((state: RootState) => state.photos.hasMore);
   const isLoading = useSelector((state: RootState) => state.photos.isLoading);
-  const trigger = useSelector((state: RootState) => state.photos.triggerSearch);
   const [searchTriggered, setSearchTriggered] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [loadMoreClicked, setLoadMoreClicked] = useState(false); // 新增狀態來追踪是否點擊了 "Load More"
+  const [hasSearched, setHasSearched] = useState(false); // 新增狀態來追踪是否進行了搜索
+
+  const loaderRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (searchTriggered && searchQuery) {
@@ -28,6 +31,9 @@ const Gallery: React.FC = () => {
         } else {
           setErrorMessage('');
         }
+      }).catch((error) => {
+        setSearchTriggered(false);
+        setErrorMessage('Failed to fetch photos. Please try again later.');
       });
     }
   }, [dispatch, searchQuery, page, searchTriggered]);
@@ -35,9 +41,11 @@ const Gallery: React.FC = () => {
   useEffect(() => {
     if (page > 1) {
       console.log('Loading more photos for page:', page);
-      dispatch(getPhotos({ query: searchQuery, page }));
+      dispatch(getPhotos({ query: searchQuery, page })).catch((error) => {
+        setErrorMessage('Failed to load more photos. Please try again later.');
+      });
     }
-  }, [dispatch, page]);
+  }, [dispatch, page, searchQuery]);
 
   const handleImageClick = (photo: Photo) => {
     dispatch(selectPhoto(photo));
@@ -58,6 +66,7 @@ const Gallery: React.FC = () => {
       return;
     }
     setSearchTriggered(true);
+    setHasSearched(true); // 更新狀態為已進行搜索
     dispatch(triggerSearch(true));
     dispatch(setNoResults(false)); 
     dispatch(getPhotos({ query: searchQuery, page: 1 })).then((action) => {
@@ -66,6 +75,9 @@ const Gallery: React.FC = () => {
       } else {
         setErrorMessage('');
       }
+    }).catch((error) => {
+      setSearchTriggered(false);
+      setErrorMessage('Failed to fetch photos. Please try again later.');
     });
   };
 
@@ -73,8 +85,35 @@ const Gallery: React.FC = () => {
     if (hasMore && !isLoading) {
       console.log('Load more button clicked');
       dispatch(incrementPage());
+      setLoadMoreClicked(true); // 設置狀態為已點擊
     }
   };
+
+  const observerCallback = useCallback((entries: IntersectionObserverEntry[]) => {
+    const [entry] = entries;
+    if (entry.isIntersecting && hasMore && !isLoading) {
+      dispatch(incrementPage());
+    }
+  }, [dispatch, hasMore, isLoading]);
+
+  useEffect(() => {
+    if (loadMoreClicked) { // 只有在點擊 "Load More" 後才啟動觀察者
+      const observer = new IntersectionObserver(observerCallback, {
+        root: null,
+        rootMargin: '20px',
+        threshold: 1.0,
+      });
+      const currentLoader = loaderRef.current; // 使用局部變量保存 loaderRef.current 的值
+      if (currentLoader) {
+        observer.observe(currentLoader);
+      }
+      return () => {
+        if (currentLoader) {
+          observer.unobserve(currentLoader);
+        }
+      };
+    }
+  }, [observerCallback, loadMoreClicked]);
 
   return (
     <GalleryContainer>
@@ -101,9 +140,11 @@ const Gallery: React.FC = () => {
 
       {isLoading && <Loader />} 
 
-      {searchQuery && hasMore && !isLoading && (
+      {hasSearched && !loadMoreClicked && hasMore && !isLoading && (
         <LoadMoreButton onClick={handleLoadMore}>Load More</LoadMoreButton>
       )}
+
+      <div ref={loaderRef}></div>
 
       {!hasMore && !isLoading && photos.length > 0 && (
         <Message>No more results</Message>
@@ -204,6 +245,8 @@ const PhotoDetailsImage = styled.img`
   max-width: 100%;
   max-height: 60vh;
   height: auto;
+  border-radius: 8px;
+  margin-bottom: 20px;
 `;
 
 const CloseButton = styled.button`
@@ -228,7 +271,7 @@ const Message = styled.p`
 const LoadMoreButton = styled.button`
   margin: 20px;
   padding: 10px 20px;
-  background-color: #007bff;
+  background-color: pink;
   color: white;
   border: none;
   cursor: pointer;

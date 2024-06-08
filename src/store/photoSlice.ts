@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { RootState } from './store';
 import { fetchPhotos } from '../api/unsplash';
 
 export interface Photo {

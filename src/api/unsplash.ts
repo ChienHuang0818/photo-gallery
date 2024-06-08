@@ -1,4 +1,3 @@
-// src/api/unsplash.ts
 import axios from 'axios';
 
 const API_URL = 'https://api.unsplash.com/search/photos';
@@ -17,15 +16,15 @@ export const fetchPhotos = async (query: string, page: number) => {
       },
     });
 
-    // 確保提取到的是正確的 URL
+
     return response.data.results.map((photo: any) => ({
       id: photo.id,
-      url: photo.urls.small, // 確認這裡使用正確的 URL 屬性
+      url: photo.urls.small, 
       description: photo.alt_description,
       author: photo.user.name,
     }));
   } catch (error) {
     console.error('Error fetching photos:', error);
-    return [];
+    throw error; 
   }
 };
