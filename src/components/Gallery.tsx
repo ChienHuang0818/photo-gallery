@@ -22,80 +22,97 @@ const Gallery: React.FC = () => {
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (searchTriggered && searchQuery) {
-      console.log('Fetching photos with query:', searchQuery, 'and page:', page);
-      dispatch(getPhotos({ query: searchQuery, page })).then((action) => {
-        setSearchTriggered(false);  
+    const fetchPhotos = async () => {
+      try {
+        const action = await dispatch(getPhotos({ query: searchQuery, page }));
+        setSearchTriggered(false);
         if (action.payload.length === 0) {
           setErrorMessage('No results');
+          console.log('No results found');
         } else {
           setErrorMessage('');
         }
-      }).catch((error) => {
+      } catch (error) {
+        console.error('Error fetching photos:', error);
         setSearchTriggered(false);
         setErrorMessage('Failed to fetch photos. Please try again later.');
-      });
+      }
+    };
+  
+    if (searchTriggered && searchQuery) {
+      fetchPhotos();
     }
   }, [dispatch, searchQuery, page, searchTriggered]);
-
+  
   useEffect(() => {
+    const loadMorePhotos = async () => {
+      try {
+        await dispatch(getPhotos({ query: searchQuery, page }));
+      } catch (error) {
+        console.error('Error loading more photos:', error);
+        setErrorMessage('Failed to load more photos. Please try again later.');
+      }
+    };
+  
     if (page > 1) {
       console.log('Loading more photos for page:', page);
-      dispatch(getPhotos({ query: searchQuery, page })).catch((error) => {
-        setErrorMessage('Failed to load more photos. Please try again later.');
-      });
+      loadMorePhotos();
     }
   }, [dispatch, page, searchQuery]);
-
+  
   const handleImageClick = (photo: Photo) => {
     dispatch(selectPhoto(photo));
   };
-
+  
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setSearchQuery(e.target.value));
-    setErrorMessage('');  
+    setErrorMessage('');
     if (!e.target.value.trim()) {
       setSearchTriggered(false);
     }
   };
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
+  
+  const handleSearchSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) {
       setErrorMessage('Please enter a keyword to search');
       return;
     }
+    setErrorMessage('');
     setSearchTriggered(true);
-    setHasSearched(true); 
+    setHasSearched(true);
     dispatch(triggerSearch(true));
-    dispatch(setNoResults(false)); 
-    dispatch(getPhotos({ query: searchQuery, page: 1 })).then((action) => {
+    dispatch(setNoResults(false));
+  
+    try {
+      const action = await dispatch(getPhotos({ query: searchQuery, page: 1 }));
       if (action.payload.length === 0) {
         setErrorMessage('No results');
       } else {
         setErrorMessage('');
       }
-    }).catch((error) => {
+    } catch (error) {
+      setErrorMessage('No results');
+    } finally {
       setSearchTriggered(false);
-      setErrorMessage('Failed to fetch photos. Please try again later.');
-    });
+    }
   };
-
+  
   const handleLoadMore = () => {
     if (hasMore && !isLoading) {
       console.log('Load more button clicked');
       dispatch(incrementPage());
-      setLoadMoreClicked(true); 
+      setLoadMoreClicked(true);
     }
   };
-
+  
   const observerCallback = useCallback((entries: IntersectionObserverEntry[]) => {
     const [entry] = entries;
     if (entry.isIntersecting && hasMore && !isLoading) {
       dispatch(incrementPage());
     }
   }, [dispatch, hasMore, isLoading]);
-
+  
   useEffect(() => {
     if (loadMoreClicked) {
       const observer = new IntersectionObserver(observerCallback, {
@@ -103,7 +120,7 @@ const Gallery: React.FC = () => {
         rootMargin: '20px',
         threshold: 1.0,
       });
-      const currentLoader = loaderRef.current; 
+      const currentLoader = loaderRef.current;
       if (currentLoader) {
         observer.observe(currentLoader);
       }
@@ -114,7 +131,7 @@ const Gallery: React.FC = () => {
       };
     }
   }, [observerCallback, loadMoreClicked]);
-
+  
   return (
     <GalleryContainer>
       <Logo src={logo} alt="Cinefly Logo" />
@@ -127,9 +144,9 @@ const Gallery: React.FC = () => {
         />
         <SearchButton type="submit">Search</SearchButton>
       </SearchBarContainer>
-
+  
       {errorMessage && <Message>{errorMessage}</Message>}
-
+  
       <GalleryGrid>
         {photos.map((photo: Photo) => (
           <GalleryItem key={photo.id} onClick={() => handleImageClick(photo)}>
@@ -137,19 +154,19 @@ const Gallery: React.FC = () => {
           </GalleryItem>
         ))}
       </GalleryGrid>
-
-      {isLoading && <Loader />} 
-
+  
+      {isLoading && <Loader />}
+  
       {hasSearched && !loadMoreClicked && hasMore && !isLoading && (
         <LoadMoreButton onClick={handleLoadMore}>Load More</LoadMoreButton>
       )}
-
+  
       <div ref={loaderRef}></div>
-
+  
       {!hasMore && !isLoading && photos.length > 0 && (
         <Message>No more results</Message>
       )}
-
+  
       {selectedPhoto && (
         <PhotoDetails>
           <PhotoDetailsImage src={selectedPhoto.url} alt={selectedPhoto.description} />
@@ -160,7 +177,8 @@ const Gallery: React.FC = () => {
       )}
     </GalleryContainer>
   );
-};
+  };
+  
 
 const GalleryContainer = styled.div`
   display: flex;

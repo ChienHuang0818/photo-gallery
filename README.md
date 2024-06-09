@@ -1,46 +1,111 @@
-# Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# Photo Gallery Project
 
-## Available Scripts
+This is a stunning photo gallery application built with React, Redux, and TypeScript, integrated with the Unsplash API.
 
-In the project directory, you can run:
+## Getting Started
 
-### `npm start`
+### Installation
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+1. **Clone the repository:**
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+   ```bash
+   git clone https://github.com/ChienHuang0818/photo-gallery.git
+   ```
 
-### `npm test`
+2. **Navigate to the project directory:**
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+   ```bash
+   cd photo-gallery
+   ```
 
-### `npm run build`
+3. **Install dependencies:**
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+   ```bash
+   npm install
+   ```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Running the Project Locally
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+To run the app in development mode:
 
-### `npm run eject`
+```bash
+npm start
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+Open [http://localhost:3000](http://localhost:3000) to view it in the browser. The page will reload if you make edits. You will also see any lint errors in the console.
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Running Tests
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+To launch the test runner in the interactive watch mode:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+```bash
+npm test
+```
 
-## Learn More
+## Additional Features
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- **Photo Search:** Users can search for photos using keywords.
+- **Photo Details:** Clicking on any photo displays detailed information, including author and description.
+- **Load More:** Supports infinite scrolling and loading more photos functionality.
+- **Error Handling:** Provides detailed error messages to ensure a user-friendly experience.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## Design Considerations
+
+- **State Management with Redux:** The project uses Redux for state management to keep the state predictable and manageable.
+- **TypeScript for Reliability:** TypeScript is used to enhance code reliability and maintainability.
+- **Optimized UI with Styled Components:** The UI is designed using styled components to offer the best visual experience while browsing photos.
+
+## Project Structure
+
+Here's an overview of the project's structure:
+
+```
+yourprojectname/
+├── public/
+├── src/
+│   ├── api/
+│   │   ├── unsplash.ts
+│   ├── assets/
+│   │   ├── logo.png
+│   ├── components/
+│   │   ├── test/
+│   │   │   ├── __mocks__/
+│   │   │   ├── Gallery.test.tsx
+│   │   │   ├── Loader.test.tsx
+│   │   │   ├── Integration.test.tsx
+│   │   │   ├── photoSlice.test.ts
+│   │   │   ├── store.test.ts
+│   │   ├── Gallery.tsx
+│   │   ├── Loader.tsx
+│   ├── store/
+│   │   ├── photoSlice.ts
+│   │   ├── store.ts   
+│   ├── App.css
+│   ├── App.tsx
+│   ├── index.css
+│   ├── index.tsx
+├── package.json
+├── README.md
+├── tsconfig.json
+
+```
+
+## Example Usage
+
+### Search Photos
+- Enter a keyword in the search bar and press "Search".
+
+### Load More Photos
+- Scroll down to the bottom of the page or click "Load More" to fetch more photos.
+
+### View Photo Details
+- Click on any photo to view its details.
+
+## Contact
+
+If you have any questions or suggestions, feel free to contact me:
+
+- **Email:** betty556611@gmail.com
+- **GitHub:** https://github.com/ChienHuang0818
+- **Demo Video:** https://www.youtube.com/watch?v=vX3-2fnk2PU&t=2s

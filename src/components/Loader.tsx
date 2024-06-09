@@ -1,13 +1,13 @@
-import React from 'react';
 import styled from 'styled-components';
 
-const Loader: React.FC = () => {
+const Loader = function() {
   return (
     <LoaderContainer data-testid="loader-container">
       <LoaderIcon data-testid="loader-icon" />
     </LoaderContainer>
   );
 };
+
 
 const LoaderContainer = styled.div`
   display: flex;
