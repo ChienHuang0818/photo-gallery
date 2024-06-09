@@ -6,7 +6,7 @@ import { RootState, AppDispatch } from '../store/store';
 import logo from '../assets/logo.png';
 import Loader from './Loader';
 
-const Gallery: React.FC = () => {
+const Gallery = () => {
   const dispatch: AppDispatch = useDispatch();
   const photos = useSelector((state: RootState) => state.photos.photos);
   const selectedPhoto = useSelector((state: RootState) => state.photos.selectedPhoto);
@@ -16,9 +16,8 @@ const Gallery: React.FC = () => {
   const isLoading = useSelector((state: RootState) => state.photos.isLoading);
   const [searchTriggered, setSearchTriggered] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [loadMoreClicked, setLoadMoreClicked] = useState(false); 
-  const [hasSearched, setHasSearched] = useState(false); 
-
+  const [loadMoreClicked, setLoadMoreClicked] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -188,7 +187,7 @@ const GalleryContainer = styled.div`
 `;
 
 const Logo = styled.img`
-  width: 200px;
+  width: 300px;
   margin-bottom: 20px;
 `;
 

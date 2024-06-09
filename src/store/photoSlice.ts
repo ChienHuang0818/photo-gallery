@@ -29,8 +29,8 @@ const initialState: PhotoState = {
   isLoading: false,
   triggerSearch: false,  
   noResults: false,  
+  errorMessage: '', 
 };
-
 export const getPhotos = createAsyncThunk(
   'photos/getPhotos',
   async ({ query, page }: { query: string; page: number }, thunkAPI) => {

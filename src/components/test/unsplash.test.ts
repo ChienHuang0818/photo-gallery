@@ -8,7 +8,7 @@ describe('fetchPhotos', () => {
 
   beforeEach(() => {
     mock = new MockAdapter(axios);
-    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {}); // 监听并抑制console.error
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {}); 
   });
 
   afterEach(() => {

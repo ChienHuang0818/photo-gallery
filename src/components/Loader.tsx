@@ -1,6 +1,6 @@
 import styled from 'styled-components';
 
-const Loader = function() {
+const Loader: React.FC = () => {
   return (
     <LoaderContainer data-testid="loader-container">
       <LoaderIcon data-testid="loader-icon" />

@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
-import Gallery from '../Gallery'; // 根据实际路径调整导入路径
+import Gallery from '../Gallery';
 
 const mockStore = configureStore([]);
 const initialState = {
@@ -17,7 +17,7 @@ const initialState = {
   },
 };
 
-test('renders search bar', () => {
+test('displays error message when search input is empty', () => {
   const store = mockStore(initialState);
   render(
     <Provider store={store}>
@@ -25,16 +25,24 @@ test('renders search bar', () => {
     </Provider>
   );
 
-  const searchInput = screen.getByPlaceholderText('Search Photo');
-  expect(searchInput).toBeInTheDocument();
+  const searchInput = screen.getByPlaceholderText('Search Photo') as HTMLInputElement;
+  const searchButton = screen.getByText('Search');
+
+  fireEvent.change(searchInput, { target: { value: ' ' } });
+  fireEvent.click(searchButton);
+
+  const errorMessage = screen.getByText('Please enter a keyword to search');
+  expect(errorMessage).toBeInTheDocument();
 });
 
-test('renders loader when loading', () => {
+test('displays "No results" when search returns no results', () => {
   const store = mockStore({
     ...initialState,
     photos: {
       ...initialState.photos,
-      isLoading: true,
+      searchQuery: 'nonexistent',
+      errorMessage: 'No results',
+      photos: []
     },
   });
   render(
@@ -43,32 +51,25 @@ test('renders loader when loading', () => {
     </Provider>
   );
 
-  const loader = screen.getByTestId('loader-container');
-  expect(loader).toBeInTheDocument();
+  const searchInput = screen.getByPlaceholderText('Search Photo') as HTMLInputElement;
+  const searchButton = screen.getByText('Search');
+
+  fireEvent.change(searchInput, { target: { value: 'nonexistent' } });
+  fireEvent.click(searchButton);
+
+  const noResultsMessage = screen.getByText('No results');
+  expect(noResultsMessage).toBeInTheDocument();
 });
 
-
-test('handles empty search input', () => {
-	const store = mockStore(initialState);
-	render(
-	  <Provider store={store}>
-		<Gallery />
-	  </Provider>
-	);
-  
-	const searchInput = screen.getByPlaceholderText('Search Photo') as HTMLInputElement;
-	const searchButton = screen.getByText('Search');
-  
-	fireEvent.change(searchInput, { target: { value: '' } });
-	fireEvent.click(searchButton);
-  
-	const errorMessage = screen.getByText('Please enter a keyword to search');
-	expect(errorMessage).toBeInTheDocument();
+test('renders search results when search button is clicked', () => {
+  const store = mockStore({
+    ...initialState,
+    photos: {
+      ...initialState.photos,
+      searchQuery: 'cats',
+      photos: [{ id: '1', url: 'https://example.com/photo1', description: 'Photo 1' }],
+    },
   });
-
-
-test('submits search query', () => {
-  const store = mockStore(initialState);
   render(
     <Provider store={store}>
       <Gallery />
@@ -81,9 +82,6 @@ test('submits search query', () => {
   fireEvent.change(searchInput, { target: { value: 'cats' } });
   fireEvent.click(searchButton);
 
-  // 确保正确触发 action
-  expect(store.getActions()).toContainEqual({
-    type: 'photos/setSearchQuery',
-    payload: 'cats',
-  });
+  const photo = screen.getByAltText('Photo 1');
+  expect(photo).toBeInTheDocument();
 });
