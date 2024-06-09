@@ -15,8 +15,9 @@ interface PhotoState {
   page: number;
   hasMore: boolean;
   isLoading: boolean;
-  triggerSearch: boolean;
-  errorMessage: string;
+  triggerSearch: boolean;  
+  noResults: boolean;  
+  errorMessage?: string;
 }
 
 const initialState: PhotoState = {
@@ -26,8 +27,8 @@ const initialState: PhotoState = {
   page: 1,
   hasMore: true,
   isLoading: false,
-  triggerSearch: false,
-  errorMessage: '',
+  triggerSearch: false,  
+  noResults: false,  
 };
 
 export const getPhotos = createAsyncThunk(
@@ -47,7 +48,7 @@ const photoSlice = createSlice({
     },
     setSearchQuery: (state, action: PayloadAction<string>) => {
       state.searchQuery = action.payload;
-      state.page = 1; // 當搜索查詢變更時，重置頁碼為1
+      state.page = 1;
     },
     incrementPage: (state) => {
       state.page += 1;
@@ -56,8 +57,8 @@ const photoSlice = createSlice({
       state.triggerSearch = action.payload;
     },
     setNoResults: (state, action: PayloadAction<boolean>) => {
-      state.hasMore = !action.payload;
-    },
+      state.noResults = action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder.addCase(getPhotos.pending, (state) => {
@@ -83,8 +84,8 @@ export const {
   selectPhoto,
   setSearchQuery,
   incrementPage,
-  triggerSearch,
-  setNoResults,
+  triggerSearch,  
+  setNoResults,  
 } = photoSlice.actions;
 
 export default photoSlice.reducer;

@@ -1,32 +1,34 @@
 import React from 'react';
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 
-const spin = keyframes`
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-`;
+const Loader: React.FC = () => {
+  return (
+    <LoaderContainer data-testid="loader-container">
+      <LoaderIcon data-testid="loader-icon" />
+    </LoaderContainer>
+  );
+};
 
 const LoaderContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  padding: 20px;
+  height: 100px;
 `;
 
 const LoaderIcon = styled.div`
-  border: 8px solid #f3f3f3;
-  border-top: 8px solid #007bff;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #22a6b3;
   border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: ${spin} 1s linear infinite;
-`;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
 
-const Loader: React.FC = () => (
-  <LoaderContainer>
-    <LoaderIcon />
-  </LoaderContainer>
-);
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+`;
 
 export default Loader;

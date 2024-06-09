@@ -16,8 +16,8 @@ const Gallery: React.FC = () => {
   const isLoading = useSelector((state: RootState) => state.photos.isLoading);
   const [searchTriggered, setSearchTriggered] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [loadMoreClicked, setLoadMoreClicked] = useState(false); // 新增狀態來追踪是否點擊了 "Load More"
-  const [hasSearched, setHasSearched] = useState(false); // 新增狀態來追踪是否進行了搜索
+  const [loadMoreClicked, setLoadMoreClicked] = useState(false); 
+  const [hasSearched, setHasSearched] = useState(false); 
 
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
@@ -66,7 +66,7 @@ const Gallery: React.FC = () => {
       return;
     }
     setSearchTriggered(true);
-    setHasSearched(true); // 更新狀態為已進行搜索
+    setHasSearched(true); 
     dispatch(triggerSearch(true));
     dispatch(setNoResults(false)); 
     dispatch(getPhotos({ query: searchQuery, page: 1 })).then((action) => {
@@ -85,7 +85,7 @@ const Gallery: React.FC = () => {
     if (hasMore && !isLoading) {
       console.log('Load more button clicked');
       dispatch(incrementPage());
-      setLoadMoreClicked(true); // 設置狀態為已點擊
+      setLoadMoreClicked(true); 
     }
   };
 
@@ -97,13 +97,13 @@ const Gallery: React.FC = () => {
   }, [dispatch, hasMore, isLoading]);
 
   useEffect(() => {
-    if (loadMoreClicked) { // 只有在點擊 "Load More" 後才啟動觀察者
+    if (loadMoreClicked) {
       const observer = new IntersectionObserver(observerCallback, {
         root: null,
         rootMargin: '20px',
         threshold: 1.0,
       });
-      const currentLoader = loaderRef.current; // 使用局部變量保存 loaderRef.current 的值
+      const currentLoader = loaderRef.current; 
       if (currentLoader) {
         observer.observe(currentLoader);
       }
